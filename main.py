@@ -9,9 +9,12 @@ class MainHandler(tornado.web.RequestHandler):
 class WebSocket(tornado.websocket.WebSocketHandler):
     def open(self):
         print("WebSocket opened")
+        print(self)
+        
 
     def on_message(self, message):
         self.write_message(u"You said: " + str(message))
+        print('Websocket: '+str(message))
 
     def on_close(self):
         print("WebSocket closed")
