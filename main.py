@@ -6,6 +6,7 @@ import uuid
 
 data = {}
 clients = []
+ws_connections = []
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -15,13 +16,19 @@ class WebSocket(tornado.websocket.WebSocketHandler):
     def open(self):
         self.id = str(uuid.uuid4())
         clients.append(self.id)
+        ws_connections.append(self)
         data[self.id] = {"pos": {"x":0,"y":0,"z":0}}
         print("WebSocket opened, id: "+ self.id)
+        for ws_connection in ws_connections:
+            clientCopy = clients[:]
+            clientCopy.remove(clients[ws_connections.index(ws_connection)])
+            ws_connection.write_message(json.dumps(clientCopy))
         
     def on_message(self, message):
         data[self.id] = json.loads(message)
         dataToSend = without_keys(data, [self.id])
-        self.write_message(json.dumps(dataToSend))
+        if dataToSend != {}:
+            self.write_message(json.dumps(dataToSend))
         
 
     def on_close(self):
