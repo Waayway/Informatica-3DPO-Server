@@ -35,6 +35,7 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         print("WebSocket closed")
         del data[self.id]
         clients.remove(self.id)
+        ws_connections.remove(self)
 
 def without_keys(d, keys):
     return {x: d[x] for x in d if x not in keys}
