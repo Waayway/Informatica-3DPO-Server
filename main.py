@@ -1,6 +1,8 @@
+from datetime import timedelta
 import tornado.ioloop
 import tornado.web
 from lobby import WebSocket
+from lobby import send_message_to_clients
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -16,4 +18,5 @@ def make_app():
 if __name__ == "__main__":
     app = make_app()
     app.listen(8888)
+    tornado.ioloop.IOLoop.instance().add_timeout(timedelta(milliseconds=1000.0/3.0), send_message_to_clients)
     tornado.ioloop.IOLoop.current().start()
