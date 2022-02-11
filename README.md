@@ -10,7 +10,13 @@ Client connects and get send `id` this id then gets stored at both the server an
 ```json
 "id"
 ```
+After this the client will send the username
+```json
+{"name": "username"}
+```
+
 Every message has a int at the front to say what kind of message it is,
+
 0. LobbyReady
 1. VelocityData
 2. TimerData
