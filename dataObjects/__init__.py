@@ -1,4 +1,3 @@
-from velocityData import VelocityData
 from typing import Union
 import json
 
