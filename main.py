@@ -12,7 +12,7 @@ def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
         (r'/ws', WebSocket)
-    ])
+    ], autoreload=True)
 
 
 if __name__ == "__main__":

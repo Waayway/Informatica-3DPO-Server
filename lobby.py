@@ -45,12 +45,17 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         self.write_message(self.id)
         # setNumid
         self.numid = len(GlobalData.lobbyReadyList)
+        GlobalData.lobbyReadyList.append(False)
+        logger.debug(GlobalData.lobbyReadyList[self.numid])
+        #send Lobby Data so the client can place current players in the lobby
+        self.send_lobby_message()
 
     def send_lobby_message(self):
         data = {}
         for i in GlobalData.ws_connections:
+            logger.debug(f"Data from connection {i.id}, {i.LobbyReady.getData()}")
             data[i.id] = i.LobbyReady.getData()
-        logger.debug("Data To send to the clients: " + data)
+        logger.debug("Data To send to the clients: 0" + str(data))
         for i in GlobalData.ws_connections:
             i.write_message("0"+json.dumps(data))
 
@@ -59,14 +64,17 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         self.write_message("1"+json.dumps(newData))
 
     def on_message(self, message):
+        message = message.decode('UTF-8')
         logger.debug("Got Data from client: "+self.id+", "+str(message))
         # checks the data the server got from client for data type, types are descriped in README.md
         if str(message).startswith("0"):
             # Get message and load into the LobbyReady Object
             message = str(message).removeprefix("0")
+            logger.debug(message)
             data = json.loads(message)
             self.LobbyReady.setData(data[self.id])
             GlobalData.lobbyReadyList[self.numid] = data[self.id]
+            logger.debug(f"Player: {self.id} is now {data[self.id]}")
             self.send_lobby_message()
         if str(message).startswith("1"):
             message = str(message).removeprefix("1")
