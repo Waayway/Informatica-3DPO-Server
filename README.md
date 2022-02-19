@@ -18,9 +18,10 @@ After this the client will send the username
 Every message has a int at the front to say what kind of message it is,
 
 0. LobbyReady
-1. VelocityData
-2. TimerData
-3. MapData
+1. LobbyToGameData
+2. VelocityData
+3. TimerData
+4. MapData
 
 Most of the data will thus be like
 ```json

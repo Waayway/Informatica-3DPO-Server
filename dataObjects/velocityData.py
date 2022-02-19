@@ -35,6 +35,3 @@ class VelocityData(Data):
     def exportData(self, string: bool = False) -> Union[str, dict]:
         self.data = {"vel": self.vel, "pos": self.pos}
         return super().exportData(string)
-
-    def changeData(self, vel):
-        self.data

@@ -5,8 +5,12 @@ from . import Data
 
 
 class LobbyReady(Data):
-    ready: bool = False
-    id: str = ""
+    def __init__(self, id) -> None:
+        super().__init__()
+        self.ready: bool = False
+        self.id: str = ""
+
+    
 
     def initialize(self, id: str, ready: bool = False):
         self.ready = ready

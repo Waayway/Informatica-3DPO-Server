@@ -1,3 +1,4 @@
+from typing import Any
 import tornado.websocket
 from loguru import logger
 import json
@@ -5,6 +6,7 @@ import uuid
 from dataObjects.velocityData import VelocityData
 from dataObjects.LobbyReady import LobbyReady
 from functions import without_keys
+from tornado import httputil
 
 
 class GlobalData:
@@ -30,12 +32,15 @@ def send_message_to_clients():
 
 
 class WebSocket(tornado.websocket.WebSocketHandler):
-    # Data used in this Class
-    velData = VelocityData()
-    LobbyReady = LobbyReady()
-    numid = 0
-    name = ""
-
+    def __init__(self, application: tornado.web.Application, request: httputil.HTTPServerRequest, **kwargs: Any) -> None:
+        super().__init__(application, request, **kwargs)
+        # Data used in this Class
+        self.velData = VelocityData()
+        self.numid = 0
+        self.first_message = True
+        self.name = ""
+        
+    
     def open(self):
         # Generate an Id and log it to console
         self.id = str(uuid.uuid4())
@@ -45,17 +50,16 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         self.write_message(self.id)
         # setNumid
         self.numid = len(GlobalData.lobbyReadyList)
-        self.LobbyReady.initialize(self.id)
+        self.LobbyReady = LobbyReady(self.id)
         GlobalData.lobbyReadyList.append(self.LobbyReady)
-        logger.debug(GlobalData.lobbyReadyList[self.numid])
         #send Lobby Data so the client can place current players in the lobby
         self.send_lobby_message()
 
     def send_lobby_message(self):
         data = {}
         for i in GlobalData.ws_connections:
-            logger.debug(f"Data from connection {i.id}, {i.LobbyReady.getData()}")
-            data[i.id] = i.LobbyReady.getData()
+            logger.debug(f"Name of {i.id} is: {i.name}")
+            data[i.id] = {"lobbydata": i.LobbyReady.getData(), "name": i.name}
         logger.debug("Data To send to the clients: 0" + str(data))
         for i in GlobalData.ws_connections:
             i.write_message("0"+json.dumps(data))
@@ -67,24 +71,22 @@ class WebSocket(tornado.websocket.WebSocketHandler):
     def on_message(self, message):
         message = message.decode('UTF-8')
         logger.debug("Got Data from client: "+self.id+", "+str(message))
+        if self.first_message:
+            data = json.loads(message)
+            self.name = data["name"]
+            self.first_message = not self.first_message
         # checks the data the server got from client for data type, types are descriped in README.md
         if str(message).startswith("0"):
             # Get message and load into the LobbyReady Object
             message = str(message).removeprefix("0")
-            logger.debug(message)
             data = json.loads(message)
             self.LobbyReady.setData(data[self.id])
             GlobalData.lobbyReadyList[self.numid] = data[self.id]
             self.send_lobby_message()
 
-        if str(message).startswith("1"):
-            message = str(message).removeprefix("1")
-            data = json.loads(message)
-            self.name = data["name"]
-
-        if str(message).startswith("2"):
+        elif str(message).startswith("1"):
             # Decifer data and import the data
-            message = str(message).removeprefix("2")
+            message = str(message).removeprefix("1")
             data = json.loads(message)
             self.velData.importData(data)
 
