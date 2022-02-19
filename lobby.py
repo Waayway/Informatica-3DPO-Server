@@ -45,7 +45,8 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         self.write_message(self.id)
         # setNumid
         self.numid = len(GlobalData.lobbyReadyList)
-        GlobalData.lobbyReadyList.append(False)
+        self.LobbyReady.initialize(self.id)
+        GlobalData.lobbyReadyList.append(self.LobbyReady)
         logger.debug(GlobalData.lobbyReadyList[self.numid])
         #send Lobby Data so the client can place current players in the lobby
         self.send_lobby_message()
@@ -74,12 +75,13 @@ class WebSocket(tornado.websocket.WebSocketHandler):
             data = json.loads(message)
             self.LobbyReady.setData(data[self.id])
             GlobalData.lobbyReadyList[self.numid] = data[self.id]
-            logger.debug(f"Player: {self.id} is now {data[self.id]}")
             self.send_lobby_message()
+
         if str(message).startswith("1"):
             message = str(message).removeprefix("1")
             data = json.loads(message)
             self.name = data["name"]
+
         if str(message).startswith("2"):
             # Decifer data and import the data
             message = str(message).removeprefix("2")
