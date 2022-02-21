@@ -1,21 +1,27 @@
-from typing import Any
-import tornado.websocket
+from datetime import datetime, timedelta
+from tornado import httputil
 from loguru import logger
-import json
-import uuid
+from typing import Any
+from dataObjects.LobbyToGameData import LobbyReadyToGameData
 from dataObjects.velocityData import VelocityData
 from dataObjects.LobbyReady import LobbyReady
 from functions import without_keys
-from tornado import httputil
+import tornado.websocket
+import json
+import uuid
 
 
 class GlobalData:
     # GlobalData for this file. just simple things that are handier to store here
     data = {}
+    lobby_to_game_data = LobbyReadyToGameData()
     ws_connections = []
     lobbyReadyList: list = []
     isLobbyStarted: bool = False
+    isLobbyReady: bool = False
+    wasLobbyReady: bool = False
     numConnected: int = 0
+    startedTimerMoment: datetime = datetime.now()
 
 
 def send_message_to_clients():
@@ -56,10 +62,13 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         self.send_lobby_message()
 
     def send_lobby_message(self):
-        data = {}
+        data = {"players": {}}
+        timeDelta = datetime.now() - GlobalData.startedTimerMoment
+        if timeDelta < timedelta(seconds=5):
+            data["timer"] = timeDelta.total_seconds()
         for i in GlobalData.ws_connections:
             logger.debug(f"Name of {i.id} is: {i.name}")
-            data[i.id] = {"lobbydata": i.LobbyReady.getData(), "name": i.name}
+            data["players"][i.id] = {"lobbydata": i.LobbyReady.getData(), "name": i.name}
         logger.debug("Data To send to the clients: 0" + str(data))
         for i in GlobalData.ws_connections:
             i.write_message("0"+json.dumps(data))
@@ -81,15 +90,47 @@ class WebSocket(tornado.websocket.WebSocketHandler):
             message = str(message).removeprefix("0")
             data = json.loads(message)
             self.LobbyReady.setData(data[self.id])
-            GlobalData.lobbyReadyList[self.numid] = data[self.id]
+            GlobalData.lobbyReadyList[self.numid] = data[self.id] 
+            check_if_lobby_all_ready()
             self.send_lobby_message()
 
         elif str(message).startswith("1"):
             # Decifer data and import the data
             message = str(message).removeprefix("1")
-            data = json.loads(message)
-            self.velData.importData(data)
+            if message == "timer":
+                check_if_lobby_all_ready()
+            
 
     def on_close(self):
         logger.info("WebSocket closed, id: " + self.id)
         GlobalData.ws_connections.remove(self)
+    
+    def send_lobby_to_game_data():
+        data = {"players": []}
+        for i in GlobalData.ws_connections:
+            data["players"].append(i.id)
+        logger.debug(f"Data to send to the clients: 2{data}")
+        for i in GlobalData.ws_connections:
+            i.write_message("2"+json.dumps(data))
+
+
+def check_if_lobby_all_ready():
+    isLobbyReady = True
+    for i in GlobalData.lobbyReadyList:
+        if not i: 
+            isLobbyReady = False
+            break
+    if isLobbyReady == True and not GlobalData.wasLobbyReady:
+        GlobalData.startedTimerMoment = datetime.now()
+        GlobalData.wasLobbyReady = isLobbyReady
+    elif isLobbyReady and GlobalData.wasLobbyReady:
+        if datetime.now() - GlobalData.startedTimerMoment > timedelta(seconds=5) and GlobalData.wasLobbyReady:
+            GlobalData.isLobbyStarted = True
+            GlobalData.startedTimerMoment = datetime.now() - timedelta(hours=5)
+            WebSocket.send_lobby_to_game_data()
+    elif not isLobbyReady:
+        GlobalData.wasLobbyReady = False
+
+    GlobalData.isLobbyReady = isLobbyReady
+
+# 

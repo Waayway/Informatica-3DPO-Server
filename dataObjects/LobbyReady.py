@@ -10,8 +10,6 @@ class LobbyReady(Data):
         self.ready: bool = False
         self.id: str = ""
 
-    
-
     def initialize(self, id: str, ready: bool = False):
         self.ready = ready
         self.id = id
