@@ -19,9 +19,10 @@ Every message has a int at the front to say what kind of message it is,
 
 0. LobbyReady
 1. 1timer, basically notifieng the server that the countdown is done
-2. LobbyToGameData
-3. VelocityData
-4. MapData
+2. LobbyToGameData 
+3. LobbyLoadedData
+4. VelocityData
+5. MapData
 
 Most of the data will thus be like
 ```json

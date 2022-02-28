@@ -33,5 +33,5 @@ class VelocityData(Data):
         logger.debug("Got velocity data: "+str(self.data))
 
     def exportData(self, string: bool = False) -> Union[str, dict]:
-        self.data = {"vel": self.vel, "pos": self.pos}
+        self.data = {"vel": self.vel, "pos": self.pos, "rot": self.rot}
         return super().exportData(string)

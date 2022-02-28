@@ -22,6 +22,7 @@ class GlobalData:
     wasLobbyReady: bool = False
     numConnected: int = 0
     startedTimerMoment: datetime = datetime.now()
+    LobbyLoadedList: list = []
 
 
 def send_message_to_clients():
@@ -45,6 +46,8 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         self.numid = 0
         self.first_message = True
         self.name = ""
+
+        self.done_loading = False
         
     
     def open(self):
@@ -76,6 +79,13 @@ class WebSocket(tornado.websocket.WebSocketHandler):
     def send_player_data(self, data):
         newData = without_keys(data, [self.id])
         self.write_message("1"+json.dumps(newData))
+    
+    def send_lobbyloaded_data(self):
+        data = {}
+        data["playersdoneloading"] = len(GlobalData.LobbyLoadedList)
+        logger.debug("Data to send to the clients: 3"+str(data))
+        for i in GlobalData.ws_connections:
+            i.write_message("3"+json.dumps(data))
 
     def on_message(self, message):
         message = message.decode('UTF-8')
@@ -99,27 +109,49 @@ class WebSocket(tornado.websocket.WebSocketHandler):
             message = str(message).removeprefix("1")
             if message == "timer":
                 check_if_lobby_all_ready()
+        elif str(message).startswith("2"):
+            message = str(message).removeprefix("2")
+            if message == "true":
+                self.done_loading = True
+                GlobalData.LobbyLoadedList.append(self.id)
+            else:
+                self.done_loading = False
+                GlobalData.LobbyLoadedList.remove(self.id)
+            self.send_lobbyloaded_data()
+        elif str(message).startswith("4"):
+            self.velData.importData(message.removeprefix("4"))
+            dataToSend = {}
+            for i in GlobalData.ws_connections:
+                if i.id == self.id: continue
+                dataToSend[i.id] = i.velData.exportData()
+            self.write_message("4"+json.dumps(dataToSend))
             
+
 
     def on_close(self):
         logger.info("WebSocket closed, id: " + self.id)
         GlobalData.ws_connections.remove(self)
+        if self.id in GlobalData.LobbyLoadedList:
+            GlobalData.LobbyLoadedList.remove(self.id)
     
     def send_lobby_to_game_data():
-        data = {"players": []}
+        data = LobbyReadyToGameData()
         for i in GlobalData.ws_connections:
-            data["players"].append(i.id)
+            data.players.append(i.id)
+            data.playersDoneLoading += int(i.done_loading)
         logger.debug(f"Data to send to the clients: 2{data}")
         for i in GlobalData.ws_connections:
-            i.write_message("2"+json.dumps(data))
+            i.write_message("2"+json.dumps(data.exportData()))
 
 
 def check_if_lobby_all_ready():
     isLobbyReady = True
     for i in GlobalData.lobbyReadyList:
+        print(i)
         if not i: 
             isLobbyReady = False
             break
+    print(isLobbyReady)
     if isLobbyReady == True and not GlobalData.wasLobbyReady:
         GlobalData.startedTimerMoment = datetime.now()
         GlobalData.wasLobbyReady = isLobbyReady
