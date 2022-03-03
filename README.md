@@ -3,6 +3,7 @@
 - Max Players in config
 - Map size in config 
 - Players when connected get into the lobby.
+- MAKE A CONFIG FILE
 
 
 ## Protocol

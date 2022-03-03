@@ -21,6 +21,7 @@ class VelocityData(Data):
         "y": 0,
         "z": 0
     }
+    anim = -1
 
     def importData(self, data: Union[str, dict]) -> None:
         super().importData(data)
@@ -30,8 +31,10 @@ class VelocityData(Data):
             self.vel = self.data['vel']
         if "rot" in self.data:
             self.rot = self.data["rot"]
-        logger.debug("Got velocity data: "+str(self.data))
+        if "anim" in self.data:
+            self.anim = self.data["anim"]
+        # logger.debug("Got velocity data: "+str(self.data))
 
     def exportData(self, string: bool = False) -> Union[str, dict]:
-        self.data = {"vel": self.vel, "pos": self.pos, "rot": self.rot}
+        self.data = {"vel": self.vel, "pos": self.pos, "rot": self.rot, "anim": self.anim}
         return super().exportData(string)

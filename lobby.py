@@ -24,20 +24,6 @@ class GlobalData:
     startedTimerMoment: datetime = datetime.now()
     LobbyLoadedList: list = []
 
-
-def send_message_to_clients():
-    # send the player data every x seconds.
-    if GlobalData.isLobbyStarted:
-        data = {}
-        for i in GlobalData.ws_connections:
-            data[i.id] = i.velData.exportData()
-
-        logger.debug("Sending Player Data: "+data)
-
-        for i in GlobalData.ws_connections:
-            i.send_player_data(data)
-
-
 class WebSocket(tornado.websocket.WebSocketHandler):
     def __init__(self, application: tornado.web.Application, request: httputil.HTTPServerRequest, **kwargs: Any) -> None:
         super().__init__(application, request, **kwargs)
@@ -51,6 +37,8 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         
     
     def open(self):
+        if GlobalData.isLobbyStarted:
+            self.close(1000,"Lobby has already started")
         # Generate an Id and log it to console
         self.id = str(uuid.uuid4())
         GlobalData.ws_connections.append(self)
@@ -124,10 +112,9 @@ class WebSocket(tornado.websocket.WebSocketHandler):
             for i in GlobalData.ws_connections:
                 if i.id == self.id: continue
                 dataToSend[i.id] = i.velData.exportData()
+            logger.warning("data to send to client: "+self.id+": "+str(dataToSend))
             self.write_message("4"+json.dumps(dataToSend))
             
-
-
     def on_close(self):
         logger.info("WebSocket closed, id: " + self.id)
         GlobalData.ws_connections.remove(self)
@@ -142,6 +129,7 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         logger.debug(f"Data to send to the clients: 2{data}")
         for i in GlobalData.ws_connections:
             i.write_message("2"+json.dumps(data.exportData()))
+        GlobalData.isLobbyStarted = True
 
 
 def check_if_lobby_all_ready():
