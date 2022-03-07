@@ -1,3 +1,5 @@
+from datetime import datetime
+import time
 from typing import Union
 from loguru import logger
 from . import Data
@@ -6,7 +8,10 @@ class LobbyReadyToGameData(Data):
     def __init__(self) -> None:
         super().__init__()
         self.players: list = []
+        self.playerNames: dict = {}
         self.playersDoneLoading: int = 0
+        self.gameTimerStart: datetime = datetime.now()
+        self.gameTimerTotalSeconds: int = 60*5
 
     # This class will import and export data that is needed for sending players from the lobby as soon as they are done in there to the actual game
     def importData(self, data: Union[str, dict]) -> None:
@@ -17,5 +22,6 @@ class LobbyReadyToGameData(Data):
         logger.debug("Got Lobby to game data: "+str(self.data))
 
     def exportData(self, string: bool = False) -> Union[str, dict]:
-        self.data = {"players": self.players, "playersdoneloading": self.playersDoneLoading}
+        timer = int(time.mktime(self.gameTimerStart.timetuple()))
+        self.data = {"players": self.players,"playerNames": self.playerNames, "playersdoneloading": self.playersDoneLoading, "timer": timer, "totalTime": self.gameTimerTotalSeconds}
         return super().exportData(string)

@@ -23,6 +23,7 @@ class GlobalData:
     numConnected: int = 0
     startedTimerMoment: datetime = datetime.now()
     LobbyLoadedList: list = []
+    GameTimerStart: datetime = datetime.now()
 
 class WebSocket(tornado.websocket.WebSocketHandler):
     def __init__(self, application: tornado.web.Application, request: httputil.HTTPServerRequest, **kwargs: Any) -> None:
@@ -112,7 +113,6 @@ class WebSocket(tornado.websocket.WebSocketHandler):
             for i in GlobalData.ws_connections:
                 if i.id == self.id: continue
                 dataToSend[i.id] = i.velData.exportData()
-            logger.warning("data to send to client: "+self.id+": "+str(dataToSend))
             self.write_message("4"+json.dumps(dataToSend))
             
     def on_close(self):
@@ -122,24 +122,27 @@ class WebSocket(tornado.websocket.WebSocketHandler):
             GlobalData.LobbyLoadedList.remove(self.id)
     
     def send_lobby_to_game_data():
+        start_game_timer()
         data = LobbyReadyToGameData()
+        data.gameTimerStart = GlobalData.GameTimerStart
         for i in GlobalData.ws_connections:
             data.players.append(i.id)
+            data.playerNames[i.id] = i.name
             data.playersDoneLoading += int(i.done_loading)
         logger.debug(f"Data to send to the clients: 2{data}")
         for i in GlobalData.ws_connections:
             i.write_message("2"+json.dumps(data.exportData()))
         GlobalData.isLobbyStarted = True
-
+        
+def start_game_timer():
+    GlobalData.GameTimerStart = datetime.now()
 
 def check_if_lobby_all_ready():
     isLobbyReady = True
     for i in GlobalData.lobbyReadyList:
-        print(i)
         if not i: 
             isLobbyReady = False
             break
-    print(isLobbyReady)
     if isLobbyReady == True and not GlobalData.wasLobbyReady:
         GlobalData.startedTimerMoment = datetime.now()
         GlobalData.wasLobbyReady = isLobbyReady
@@ -152,5 +155,3 @@ def check_if_lobby_all_ready():
         GlobalData.wasLobbyReady = False
 
     GlobalData.isLobbyReady = isLobbyReady
-
-# 
