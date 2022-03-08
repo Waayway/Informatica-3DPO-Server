@@ -21,7 +21,10 @@ class VelocityData(Data):
         "y": 0,
         "z": 0
     }
-    anim = -1
+    anim = {
+        "num": 0,
+        "reversed": False
+    }
 
     def importData(self, data: Union[str, dict]) -> None:
         super().importData(data)
