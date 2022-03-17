@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from tornado import httputil
 from loguru import logger
 from typing import Any
+from dataObjects.GameOverData import GameOverData
 from dataObjects.LobbyToGameData import LobbyReadyToGameData
 from dataObjects.velocityData import VelocityData
 from dataObjects.LobbyReady import LobbyReady
@@ -98,6 +99,10 @@ class WebSocket(tornado.websocket.WebSocketHandler):
             message = str(message).removeprefix("1")
             if message == "timer":
                 check_if_lobby_all_ready()
+            elif message == "gametimer":
+                current_time_over_time = GlobalData.lobby_to_game_data.is_current_time_over_time()
+                if current_time_over_time:
+                    pass
         elif str(message).startswith("2"):
             message = str(message).removeprefix("2")
             if message == "true":
@@ -120,6 +125,8 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         GlobalData.ws_connections.remove(self)
         if self.id in GlobalData.LobbyLoadedList:
             GlobalData.LobbyLoadedList.remove(self.id)
+        if len(GlobalData.ws_connections) < 1:
+            GlobalData.isLobbyStarted = False
     
     def send_lobby_to_game_data():
         start_game_timer()
@@ -133,6 +140,14 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         for i in GlobalData.ws_connections:
             i.write_message("2"+json.dumps(data.exportData()))
         GlobalData.isLobbyStarted = True
+    
+def send_game_over(hiders: bool):
+    gameoverData = GameOverData()
+    gameoverData.hiders = hiders
+    gameoverData.importData(GlobalData.lobby_to_game_data.exportData())
+    data = gameoverData.exportData(True)
+    for i in GlobalData.ws_connections:
+        i.write_message("5"+data)
         
 def start_game_timer():
     GlobalData.GameTimerStart = datetime.now()
@@ -155,3 +170,5 @@ def check_if_lobby_all_ready():
         GlobalData.wasLobbyReady = False
 
     GlobalData.isLobbyReady = isLobbyReady
+
+
