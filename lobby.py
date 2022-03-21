@@ -102,7 +102,7 @@ class WebSocket(tornado.websocket.WebSocketHandler):
             elif message == "gametimer":
                 current_time_over_time = GlobalData.lobby_to_game_data.is_current_time_over_time()
                 if current_time_over_time:
-                    pass
+                    send_game_over(True)
         elif str(message).startswith("2"):
             message = str(message).removeprefix("2")
             if message == "true":
@@ -146,6 +146,10 @@ def send_game_over(hiders: bool):
     gameoverData.hiders = hiders
     gameoverData.importData(GlobalData.lobby_to_game_data.exportData())
     data = gameoverData.exportData(True)
+    GlobalData.isLobbyReady = False
+    GlobalData.isLobbyStarted = False
+    GlobalData.startedTimerMoment = datetime.now()
+    GlobalData.GameTimerStart = datetime.now()
     for i in GlobalData.ws_connections:
         i.write_message("5"+data)
         
