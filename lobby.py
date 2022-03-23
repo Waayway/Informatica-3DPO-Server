@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import random
 from tornado import httputil
 from loguru import logger
 from typing import Any
@@ -132,15 +133,19 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         start_game_timer()
         data = LobbyReadyToGameData()
         data.gameTimerStart = GlobalData.GameTimerStart
+        data.chosenplayer = choose_seeker()
         for i in GlobalData.ws_connections:
             data.players.append(i.id)
             data.playerNames[i.id] = i.name
             data.playersDoneLoading += int(i.done_loading)
         logger.debug(f"Data to send to the clients: 2{data}")
         for i in GlobalData.ws_connections:
-            i.write_message("2"+json.dumps(data.exportData()))
+            i.write_message("2"+data.exportData(True))
         GlobalData.isLobbyStarted = True
-    
+
+def choose_seeker():
+    return GlobalData.ws_connections[random.randrange(len(GlobalData.ws_connections))].id
+
 def send_game_over(hiders: bool):
     gameoverData = GameOverData()
     gameoverData.hiders = hiders

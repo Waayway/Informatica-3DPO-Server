@@ -10,8 +10,9 @@ class LobbyReadyToGameData(Data):
         self.players: list = []
         self.playerNames: dict = {}
         self.playersDoneLoading: int = 0
+        self.chosenplayer: str = ""
         self.gameTimerStart: datetime = datetime.now()
-        self.gameTimerTotalSeconds: int = 5 #60*5
+        self.gameTimerTotalSeconds: int = 60*5
 
     # This class will import and export data that is needed for sending players from the lobby as soon as they are done in there to the actual game
     def importData(self, data: Union[str, dict]) -> None:
@@ -23,7 +24,7 @@ class LobbyReadyToGameData(Data):
 
     def exportData(self, string: bool = False) -> Union[str, dict]:
         timer = int(time.mktime(self.gameTimerStart.timetuple()))
-        self.data = {"players": self.players,"playerNames": self.playerNames, "playersdoneloading": self.playersDoneLoading, "timer": timer, "totalTime": self.gameTimerTotalSeconds}
+        self.data = {"players": self.players,"playerNames": self.playerNames, "playersdoneloading": self.playersDoneLoading, "timer": timer, "totalTime": self.gameTimerTotalSeconds,"chosenplayer": self.chosenplayer}
         return super().exportData(string)
     
     def is_current_time_over_time(self):
