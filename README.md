@@ -24,6 +24,7 @@ Every message has a int at the front to say what kind of message it is,
 3. LobbyLoadedData
 4. VelocityData
 5. GameOverData
+6. DeathData
 
 Most of the data will thus be like
 ```json

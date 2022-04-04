@@ -1,3 +1,4 @@
+from ast import Global
 from datetime import datetime, timedelta
 import random
 from tornado import httputil
@@ -26,6 +27,8 @@ class GlobalData:
     startedTimerMoment: datetime = datetime.now()
     LobbyLoadedList: list = []
     GameTimerStart: datetime = datetime.now()
+    game_over_data: GameOverData = GameOverData()
+    seeker: str = ""
 
 class WebSocket(tornado.websocket.WebSocketHandler):
     def __init__(self, application: tornado.web.Application, request: httputil.HTTPServerRequest, **kwargs: Any) -> None:
@@ -37,6 +40,8 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         self.name = ""
 
         self.done_loading = False
+        
+        self.is_found = False
         
     
     def open(self):
@@ -120,7 +125,13 @@ class WebSocket(tornado.websocket.WebSocketHandler):
                 if i.id == self.id: continue
                 dataToSend[i.id] = i.velData.exportData()
             self.write_message("4"+json.dumps(dataToSend))
-            
+        elif str(message).startswith("5"):
+            GlobalData.game_over_data.importData(message.removeprefix("5"))
+            check_if_everybody_is_found()
+            data = json.loads(message.removeprefix("5"))
+            for i in GlobalData.ws_connections:
+                i.write_message("6"+data["playerFound"])
+
     def on_close(self):
         logger.info("WebSocket closed, id: " + self.id)
         GlobalData.ws_connections.remove(self)
@@ -142,15 +153,21 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         for i in GlobalData.ws_connections:
             i.write_message("2"+data.exportData(True))
         GlobalData.isLobbyStarted = True
+    
+def check_if_everybody_is_found():
+    numPeopleFound = 0
+    for i in GlobalData.game_over_data.playersFound:
+        numPeopleFound += 1
+    if numPeopleFound+1 >= len(GlobalData.ws_connections):
+        send_game_over(False)
 
 def choose_seeker():
     return GlobalData.ws_connections[random.randrange(len(GlobalData.ws_connections))].id
 
 def send_game_over(hiders: bool):
-    gameoverData = GameOverData()
-    gameoverData.hiders = hiders
-    gameoverData.importData(GlobalData.lobby_to_game_data.exportData())
-    data = gameoverData.exportData(True)
+    GlobalData.game_over_data.hiders = hiders
+    GlobalData.game_over_data.importData(GlobalData.lobby_to_game_data.exportData())
+    data = GlobalData.game_over_data.exportData(True)
     GlobalData.isLobbyReady = False
     GlobalData.isLobbyStarted = False
     GlobalData.startedTimerMoment = datetime.now()

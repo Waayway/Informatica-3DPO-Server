@@ -23,7 +23,7 @@ class LobbyReadyToGameData(Data):
         logger.debug("Got Lobby to game data: "+str(self.data))
 
     def exportData(self, string: bool = False) -> Union[str, dict]:
-        timer = int(time.mktime(self.gameTimerStart.timetuple()))
+        timer = (datetime.now() - self.gameTimerStart).total_seconds()
         self.data = {"players": self.players,"playerNames": self.playerNames, "playersdoneloading": self.playersDoneLoading, "timer": timer, "totalTime": self.gameTimerTotalSeconds,"chosenplayer": self.chosenplayer}
         return super().exportData(string)
     
