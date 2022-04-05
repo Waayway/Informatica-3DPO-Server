@@ -66,7 +66,7 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         if timeDelta < timedelta(seconds=5):
             data["timer"] = timeDelta.total_seconds()
         for i in GlobalData.ws_connections:
-            logger.debug(f"Name of {i.id} is: {i.name}")
+            # logger.debug(f"Name of {i.id} is: {i.name}")
             data["players"][i.id] = {"lobbydata": i.LobbyReady.getData(), "name": i.name}
         logger.debug("Data To send to the clients: 0" + str(data))
         for i in GlobalData.ws_connections:
@@ -90,6 +90,7 @@ class WebSocket(tornado.websocket.WebSocketHandler):
             data = json.loads(message)
             self.name = data["name"]
             self.first_message = not self.first_message
+            self.send_lobby_message()
         # checks the data the server got from client for data type, types are descriped in README.md
         if str(message).startswith("0"):
             # Get message and load into the LobbyReady Object
@@ -158,8 +159,8 @@ def check_if_everybody_is_found():
     numPeopleFound = 0
     for i in GlobalData.game_over_data.playersFound:
         numPeopleFound += 1
-    if numPeopleFound+1 >= len(GlobalData.ws_connections):
-        send_game_over(False)
+    if numPeopleFound >= len(GlobalData.ws_connections):
+        send_game_over(hiders=False)
 
 def choose_seeker():
     return GlobalData.ws_connections[random.randrange(len(GlobalData.ws_connections))].id
