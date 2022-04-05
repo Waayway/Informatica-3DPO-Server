@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+  game-server:
+    image: informatica3dpo
+    container_name: informatica-game
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 8888:8888
+
+
+
+networks:
+  default:
+    external:
+      name: aqua
