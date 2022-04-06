@@ -143,7 +143,7 @@ class WebSocket(tornado.websocket.WebSocketHandler):
     
     def send_lobby_to_game_data():
         start_game_timer()
-        data = LobbyReadyToGameData()
+        data = GlobalData.lobby_to_game_data
         data.gameTimerStart = GlobalData.GameTimerStart
         data.chosenplayer = choose_seeker()
         for i in GlobalData.ws_connections:
@@ -156,10 +156,9 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         GlobalData.isLobbyStarted = True
     
 def check_if_everybody_is_found():
-    numPeopleFound = 0
-    for i in GlobalData.game_over_data.playersFound:
-        numPeopleFound += 1
-    if numPeopleFound >= len(GlobalData.ws_connections):
+    numPeopleFound = len(GlobalData.game_over_data.playersFound)
+    
+    if numPeopleFound+1 >= len(GlobalData.ws_connections):
         send_game_over(hiders=False)
 
 def choose_seeker():
