@@ -139,7 +139,7 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         if self.id in GlobalData.LobbyLoadedList:
             GlobalData.LobbyLoadedList.remove(self.id)
         if len(GlobalData.ws_connections) < 1:
-            GlobalData.isLobbyStarted = False
+            reset()
     
     def send_lobby_to_game_data():
         start_game_timer()
@@ -174,13 +174,34 @@ def send_game_over(hiders: bool):
     GlobalData.GameTimerStart = datetime.now()
     for i in GlobalData.ws_connections:
         i.write_message("5"+data)
+    reset()
         
+def reset():
+    GlobalData.data = {}
+    GlobalData.lobby_to_game_data = LobbyReadyToGameData()
+    GlobalData.isLobbyStarted = False
+    GlobalData.isLobbyReady = False
+    GlobalData.wasLobbyReady = False
+    GlobalData.startedTimerMoment = datetime.now()
+    GlobalData.LobbyLoadedList = []
+    GlobalData.GameTimerStart = datetime.now()
+    GlobalData.game_over_data = GameOverData()
+    GlobalData.seeker = ""
+
+    for i in GlobalData.lobbyReadyList:
+        i = False
+    for i in GlobalData.ws_connections:
+        i.is_found = False
+        i.done_loading = False
+
+
 def start_game_timer():
     GlobalData.GameTimerStart = datetime.now()
 
 def check_if_lobby_all_ready():
     isLobbyReady = True
     for i in GlobalData.lobbyReadyList:
+        logger.debug(i)
         if not i: 
             isLobbyReady = False
             break
