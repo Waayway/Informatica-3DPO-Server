@@ -12,7 +12,7 @@ class LobbyReadyToGameData(Data):
         self.playersDoneLoading: int = 0
         self.chosenplayer: str = ""
         self.gameTimerStart: datetime = datetime.now()
-        self.gameTimerTotalSeconds: int = 60*5
+        self.gameTimerTotalSeconds: int = 60*10
 
     # This class will import and export data that is needed for sending players from the lobby as soon as they are done in there to the actual game
     def importData(self, data: Union[str, dict]) -> None:

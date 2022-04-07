@@ -11,8 +11,7 @@ services:
       - 8888:8888
 
 
-
 networks:
   default:
     external:
-      name: lava
+      name: aqua
