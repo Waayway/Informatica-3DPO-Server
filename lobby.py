@@ -29,6 +29,7 @@ class GlobalData:
     GameTimerStart: datetime = datetime.now()
     game_over_data: GameOverData = GameOverData()
     seeker: str = ""
+    map_used: int = 0
 
 class WebSocket(tornado.websocket.WebSocketHandler):
     def __init__(self, application: tornado.web.Application, request: httputil.HTTPServerRequest, **kwargs: Any) -> None:
@@ -61,7 +62,7 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         self.send_lobby_message()
 
     def send_lobby_message(self):
-        data = {"players": {}}
+        data = {"players": {}, "map": GlobalData.map_used}
         timeDelta = datetime.now() - GlobalData.startedTimerMoment
         if timeDelta < timedelta(seconds=5):
             data["timer"] = timeDelta.total_seconds()
@@ -89,6 +90,8 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         if self.first_message:
             data = json.loads(message)
             self.name = data["name"]
+            if len(GlobalData.ws_connections) <= 1:
+                GlobalData.map_used = data["prefered_map"]
             self.first_message = not self.first_message
             self.send_lobby_message()
         # checks the data the server got from client for data type, types are descriped in README.md
