@@ -22,8 +22,9 @@ class VelocityData(Data):
         "z": 0
     }
     anim = {
-        "num": 0,
-        "reversed": False
+        "left_right": 0,
+        "walking": False,
+        "running": False
     }
 
     def importData(self, data: Union[str, dict]) -> None:
@@ -39,5 +40,7 @@ class VelocityData(Data):
         # logger.debug("Got velocity data: "+str(self.data))
 
     def exportData(self, string: bool = False) -> Union[str, dict]:
-        self.data = {"vel": self.vel, "pos": self.pos, "rot": self.rot, "anim": self.anim}
+        self.data = {"vel": self.vel, "pos": self.pos,
+                     "rot": self.rot, "anim": self.anim}
+        logger.debug("Sending Anim_data: " + json.dumps(self.data))
         return super().exportData(string)

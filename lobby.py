@@ -51,6 +51,8 @@ class WebSocket(tornado.websocket.WebSocketHandler):
         # Generate an Id and log it to console
         self.id = str(uuid.uuid4())
         GlobalData.ws_connections.append(self)
+        logger.debug(f"Adding {self.id} to ws_connections")
+        logger.debug(GlobalData.ws_connections)
         logger.info("WebSocket opened, id: " + self.id)
         # Write the id back to the client for saving on the client
         self.write_message(self.id)
@@ -85,7 +87,8 @@ class WebSocket(tornado.websocket.WebSocketHandler):
             i.write_message("3"+json.dumps(data))
 
     def on_message(self, message):
-        message = message.decode('UTF-8')
+        if type(message) == bytes:
+            message = message.decode('UTF-8')
         logger.debug("Got Data from client: "+self.id+", "+str(message))
         if self.first_message:
             data = json.loads(message)
@@ -128,6 +131,7 @@ class WebSocket(tornado.websocket.WebSocketHandler):
             for i in GlobalData.ws_connections:
                 if i.id == self.id: continue
                 dataToSend[i.id] = i.velData.exportData()
+            logger.debug("Sending data to client 4"+json.dumps(dataToSend))
             self.write_message("4"+json.dumps(dataToSend))
         elif str(message).startswith("5"):
             GlobalData.game_over_data.importData(message.removeprefix("5"))

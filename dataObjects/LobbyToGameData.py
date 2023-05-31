@@ -4,6 +4,7 @@ from typing import Union
 from loguru import logger
 from . import Data
 
+
 class LobbyReadyToGameData(Data):
     def __init__(self) -> None:
         super().__init__()
@@ -24,9 +25,10 @@ class LobbyReadyToGameData(Data):
 
     def exportData(self, string: bool = False) -> Union[str, dict]:
         timer = (datetime.now() - self.gameTimerStart).total_seconds()
-        self.data = {"players": self.players,"playerNames": self.playerNames, "playersdoneloading": self.playersDoneLoading, "timer": timer, "totalTime": self.gameTimerTotalSeconds,"chosenplayer": self.chosenplayer}
+        self.data = {"players": self.players, "playerNames": self.playerNames, "playersdoneloading": self.playersDoneLoading,
+                     "timer": timer, "totalTime": self.gameTimerTotalSeconds, "chosenplayer": self.chosenplayer}
         return super().exportData(string)
-    
+
     def is_current_time_over_time(self):
         cur_time = datetime.now()
         return cur_time - self.gameTimerStart >= timedelta(seconds=self.gameTimerTotalSeconds)
